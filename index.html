@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body class="bg-dark text-light">
+<body class="text-light">
 
-    <header class="container-fluid py-3 border-bottom border-warning">
+    <header class="container-fluid py-3 border-bottom border-warning bg-dark">
         <div class="d-flex justify-content-between align-items-center">
             <h4 class="text-warning mb-0">Master of the Adventurers' Guild</h4>
             <div class="h5 mb-0">
@@ -23,6 +23,15 @@
                     Real</button>
                 <button onclick="avancarTurno()" class="btn btn-warning btn-sm fw-bold">Passar Dia</button>
             </div>
+
+            <div class="save-controls mt-3">
+                <button class="btn btn-sm btn-outline-secondary" onclick="exportarSave()">Baixar Backup</button>
+                <label class="btn btn-sm btn-outline-secondary mb-0">
+                    Carregar Arquivo <input type="file" hidden onchange="importarSave(event)">
+                </label>
+                <button class="btn btn-sm btn-outline-danger" onclick="resetarJogo()">Reset Total</button>
+            </div>
+
         </div>
     </header>
 
@@ -52,6 +61,11 @@
                     <div class="card-body">
                         <div id="taverna-candidatos">
                         </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <button class="btn btn-outline-warning btn-sm w-100" onclick="renovarCandidatos()">
+                            Atualizar Mercenários (10 Ouro)
+                        </button>
                     </div>
                 </div>
             </div>

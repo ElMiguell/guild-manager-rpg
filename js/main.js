@@ -9,6 +9,7 @@ let estado = {
   tempoReal: false,
   timer: null,
   historicoMissoes: [],
+  logs: [],
 };
 
 function atualizarUI() {
@@ -328,6 +329,7 @@ function enviarMissaoDireta(idContrato) {
   log(
     `Expedição lançada: ${contrato.nome}. Boa sorte aos ${grupo.length} mercenários!`,
   );
+  salvarJogo();
   atualizarUI();
 }
 
@@ -347,6 +349,7 @@ function contratarMercenario(index) {
   estado.mercenarios.push(candidato);
   estado.candidatosDoDia.splice(index, 1);
   log(`Contratado: ${candidato.nome}`);
+  salvarJogo();
   atualizarUI();
 }
 
@@ -366,6 +369,7 @@ function dispensarMercenario(index) {
   if (confirm(`Deseja realmente dispensar ${merc.nome}?`)) {
     estado.mercenarios.splice(index, 1);
     log(`${merc.nome} deixou a guilda.`, "info");
+    salvarJogo();
     atualizarUI(); // Recarrega a tela para atualizar os índices
   }
 }
@@ -507,6 +511,7 @@ function passarTempo(dias) {
 
   estado.missoesAtivas = missoesRestantes;
   gerarCandidatosDoDia();
+  salvarJogo();
   atualizarUI();
 }
 
@@ -517,12 +522,31 @@ function gerarCandidatosDoDia() {
   }
 }
 
+function renovarCandidatos() {
+  const custoReroll = 10; // Valor fixo ou poderia subir com o nível da taverna
+
+  if (estado.ouro >= custoReroll) {
+    estado.ouro -= custoReroll;
+    gerarCandidatosDoDia(); // Reutiliza sua função existente
+    log(
+      `Você pagou ${custoReroll} G para atrair novos recrutas para a taverna.`,
+      "info",
+    );
+
+    salvarJogo(); // Salva o novo estado dos candidatos
+    atualizarUI(); // Renderiza a lista nova
+  } else {
+    log("Ouro insuficiente para procurar novos recrutas!", "alerta");
+  }
+}
+
 function melhorarTaverna() {
   const custo = estado.nivelTaverna * 50;
   if (estado.ouro >= custo) {
     estado.ouro -= custo;
     estado.nivelTaverna++;
     log(`Taverna Nível ${estado.nivelTaverna}!`);
+    salvarJogo();
     atualizarUI();
   } else {
     log("Ouro insuficiente.");
@@ -546,39 +570,119 @@ function alternarTempoReal() {
 }
 
 function log(msg, tipo = "info") {
-  const container = document.getElementById("log");
-  const tpl = document.getElementById("tpl-log");
-  const clone = tpl.content.cloneNode(true);
+  // 1. Salva o log no objeto estado para persistência
+  const novoLog = { msg, tipo, dia: estado.dia };
+  estado.logs.unshift(novoLog); // Adiciona no início da array
 
-  // Configura os dados
-  clone.querySelector(".l-data").innerText = `Dia ${estado.dia} - Registro #`;
-  clone.querySelector(".l-texto").innerText = msg;
-
-  // Define a cor da borda baseado no tipo
-  const entrada = clone.querySelector(".log-entry");
-  switch (tipo) {
-    case "sucesso":
-      entrada.classList.add("border-success");
-      break;
-    case "erro":
-      entrada.classList.add("border-danger");
-      break;
-    case "alerta":
-      entrada.classList.add("border-warning");
-      break;
-    default:
-      entrada.classList.add("border-info");
-      break;
+  // Mantém apenas os últimos 30 logs no estado
+  if (estado.logs.length > 30) {
+    estado.logs.pop();
   }
 
-  // Insere no topo para a mensagem mais nova aparecer primeiro
-  container.prepend(clone);
+  // 2. Renderiza na tela (Chamamos a UI para desenhar)
+  renderizarLogs();
 
-  // Limpeza de histórico (Opcional: mantém apenas as últimas 30 mensagens para não pesar)
-  if (container.children.length > 30) {
-    container.removeChild(container.lastChild);
+  // Como o log mudou o estado, aproveitamos para salvar
+  salvarJogo();
+}
+
+function renderizarLogs() {
+  const container = document.getElementById("log");
+  const tpl = document.getElementById("tpl-log");
+  if (!container || !tpl) return;
+
+  container.innerHTML = ""; // Limpa para desenhar a lista atualizada
+
+  estado.logs.forEach((item) => {
+    const clone = tpl.content.cloneNode(true);
+
+    clone.querySelector(".l-data").innerText = `Dia ${item.dia} - Registro #`;
+    clone.querySelector(".l-texto").innerText = item.msg;
+
+    const entrada = clone.querySelector(".log-entry");
+    switch (item.tipo) {
+      case "sucesso":
+        entrada.classList.add("border-success");
+        break;
+      case "erro":
+        entrada.classList.add("border-danger");
+        break;
+      case "alerta":
+        entrada.classList.add("border-warning");
+        break;
+      default:
+        entrada.classList.add("border-info");
+        break;
+    }
+
+    container.appendChild(clone); // Adiciona na ordem da array
+  });
+}
+
+// --- SISTEMA DE SAVE ---
+
+function salvarJogo() {
+  localStorage.setItem("guild_manager_save", JSON.stringify(estado));
+}
+
+function carregarJogo() {
+  const save = localStorage.getItem("guild_manager_save");
+  if (save) {
+    try {
+      const dadosCarregados = JSON.parse(save);
+      estado = { ...estado, ...dadosCarregados };
+
+      // Se o save for antigo e não tiver a array de logs, criamos uma vazia
+      if (!estado.logs) estado.logs = [];
+
+      renderizarLogs(); // Desenha os logs recuperados
+      log("Progresso carregado automaticamente.", "info");
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
-gerarCandidatosDoDia();
+// Exporta um arquivo .json para o computador do usuário
+function exportarSave() {
+  const dataStr =
+    "data:text/json;charset=utf-8," +
+    encodeURIComponent(JSON.stringify(estado));
+  const downloadAnchorNode = document.createElement("a");
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute(
+    "download",
+    `guild_save_dia_${estado.dia}.json`,
+  );
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+  log("Arquivo de save gerado com sucesso!", "sucesso");
+}
+
+// Importa um arquivo .json selecionado pelo usuário
+function importarSave(event) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const dados = JSON.parse(e.target.result);
+      estado = dados;
+      salvarJogo(); // Salva no localStorage o novo estado importado
+      location.reload(); // Recarrega a página para aplicar tudo
+    } catch (err) {
+      alert("Arquivo de save inválido!");
+    }
+  };
+  reader.readAsText(event.target.files[0]);
+}
+
+function resetarJogo() {
+  if (confirm("Tem certeza? Isso apagará toda a sua guilda permanentemente!")) {
+    localStorage.removeItem("guild_manager_save");
+    location.reload();
+  }
+}
+
+carregarJogo(); // Tenta carregar antes de gerar novos candidatos
+if (estado.candidatosDoDia.length === 0) gerarCandidatosDoDia();
 atualizarUI();
