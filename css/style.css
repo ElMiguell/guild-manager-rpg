@@ -1,8 +1,110 @@
 body {
-    /* background: radial-gradient(#5E3A25,
-            #4A2616 30%,
-            #33180D 50%,
-            #1F0E07 70%,
-            #120A05); */
-            background-color: #292929;
+    background-color: #292929;
+    padding-top: 0px;
+}
+
+/* Container principal para evitar que o menu cubra o conteúdo */
+#game-container {
+    padding-bottom: 60px;
+    /* Espaço para o menu inferior */
+}
+
+/* Estilo do Menu */
+.menu-principal {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #1a1a1a;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    border-top: 2px solid #ffc107;
+    z-index: 1050;
+}
+
+.btn-nav {
+    background: none;
+    border: none;
+    color: #bdc3c7;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: 0.3s;
+}
+
+.btn-nav.ativo {
+    color: #f1c40f;
+    font-weight: bold;
+    transform: translateY(-5px);
+}
+
+/* Classe que será aplicada às seções */
+.tela-conteudo {
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.badge {
+    font-family: 'Monospace', sans-serif;
+    font-size: 0.9rem;
+}
+
+/* Definição do movimento: opacidade de 0 a 1 e um leve deslocamento para cima */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Otimização para Mobile: evita que elementos clicáveis "fujam" do dedo */
+@media (max-width: 768px) {
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+/* Responsividade: Se for PC, podemos mover o menu para o topo ou lateral */
+@media (min-width: 768px) {
+    .menu-principal {
+        top: 0;
+        bottom: auto;
+        flex-direction: row;
+        height: 60px;
+    }
+
+    #game-container {
+        padding-bottom: 0;
+        padding-top: 70px;
+    }
+
+    #game-header {
+        margin-top: 70px;
+    }
+}
+
+/* No Mobile, reduzimos um pouco o tamanho da fonte do título para caber em uma linha */
+@media (max-width: 576px) {
+    #game-header h4 {
+        font-size: 1.1rem;
+    }
+
+    /* Ajuste para o container principal não bater no menu inferior */
+    #game-container {
+        padding-top: 10px;
+        padding-bottom: 100px;
+    }
 }

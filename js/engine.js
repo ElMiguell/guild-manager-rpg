@@ -107,3 +107,25 @@ function processarEvolucao(mercenario, xpGanha) {
   }
   return false;
 }
+
+function obterCustoUpgradeTaverna(nivelAtual) {
+  // Exemplo: Nível 1 -> 100G, Nível 2 -> 300G, Nível 3 -> 600G
+  // Uma fórmula comum em jogos de gerenciamento:
+  return Math.floor(50 * Math.pow(nivelAtual, 1.5) + nivelAtual * 50);
+}
+
+// Relaciona Atributos com as Classes que melhor os representam
+const MAPA_ATRIBUTO_CLASSE = {
+  forca: "Guerreiro",
+  agilidade: ["Ladino", "Arqueiro"],
+  resistencia: "Clérigo",
+  inteligencia: "Mago",
+};
+
+function verificarEspecialista(mercenario, atributoChave) {
+  const ideal = MAPA_ATRIBUTO_CLASSE[atributoChave];
+  if (Array.isArray(ideal)) {
+    return ideal.includes(mercenario.classe);
+  }
+  return mercenario.classe === ideal;
+}

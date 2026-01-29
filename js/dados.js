@@ -46,7 +46,7 @@ const DADOS_JOGO = {
     {
       id: 3,
       nome: "Investigar Ruínas",
-      rank: "Prata",
+      rank: "Ferro",
       dificuldade: 30,
       recompensa: 150,
       tempo: 3,

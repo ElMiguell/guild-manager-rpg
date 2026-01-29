@@ -11,173 +11,191 @@
 
 <body class="text-light">
 
-    <header class="container-fluid py-3 border-bottom border-warning bg-dark">
-        <div class="d-flex justify-content-between align-items-center">
-            <h4 class="text-warning mb-0">Master of the Adventurers' Guild</h4>
-            <div class="h5 mb-0">
-                <span class="badge bg-warning text-dark">Ouro: <span id="ouro">100</span></span>
-                <span class="badge bg-info">Dia: <span id="dia">1</span></span>
-            </div>
-            <div>
-                <button onclick="alternarTempoReal()" id="btn-tempo" class="btn btn-outline-info btn-sm">Ativar Tempo
-                    Real</button>
-                <button onclick="avancarTurno()" class="btn btn-warning btn-sm fw-bold">Passar Dia</button>
-            </div>
+    <nav class="menu-principal">
+        <button onclick="navegar('guilda')" class="btn-nav" id="btn-guilda">🏰 Guilda</button>
+        <button onclick="navegar('missoes')" class="btn-nav" id="btn-missoes">📜 Missões</button>
+        <button onclick="navegar('escritorio')" class="btn-nav" id="btn-escritorio">✍️ Escritório</button>
+    </nav>
 
-            <div class="save-controls mt-3">
-                <button class="btn btn-sm btn-outline-secondary" onclick="exportarSave()">Baixar Backup</button>
-                <label class="btn btn-sm btn-outline-secondary mb-0">
-                    Carregar Arquivo <input type="file" hidden onchange="importarSave(event)">
-                </label>
-                <button class="btn btn-sm btn-outline-danger" onclick="resetarJogo()">Reset Total</button>
-            </div>
+    <header id="game-header" class="container-fluid py-3 border-bottom border-warning bg-dark sticky-top">
+        <div class="container">
+            <div class="row g-3 align-items-center">
+                <div class="col-12 col-md-4 text-center text-md-start">
+                    <h4 class="text-warning mb-0">Master of the Adventurers' Guild</h4>
+                </div>
 
+                <div class="col-12 col-md-4">
+                    <div class="d-flex justify-content-center gap-2">
+                        <span class="badge bg-warning text-dark p-2">Ouro: <span id="ouro">100</span></span>
+                        <span class="badge bg-info p-2">Dia: <span id="dia">1</span></span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="d-flex justify-content-center justify-content-md-end gap-2">
+                        <button onclick="alternarTempoReal()" id="btn-tempo" class="btn btn-outline-info btn-sm">Tempo
+                            Real</button>
+                        <button onclick="avancarTurno()" class="btn btn-warning btn-sm fw-bold">Passar Dia</button>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown">
+                                ⚙️
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                                <li><a class="dropdown-item" href="#" onclick="exportarSave()">Baixar Backup</a></li>
+                                <li><label class="dropdown-item" style="cursor:pointer">Carregar Arquivo <input
+                                            type="file" hidden onchange="importarSave(event)"></label></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="resetarJogo()">Reset
+                                        Total</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="container-fluid py-4">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <div class="card bg-dark text-white border-secondary shadow mb-4">
-                    <div class="card-header bg-dark border-warning text-warning h6">Taverna</div>
-                    <div class="card-body bg-dark">
-                        <small class="text-warning">Nível da Taverna: <b id="lvl-taverna">1</b></small><br>
-                        <small>Vagas: <b id="vagas-ocupadas">0</b> / <b id="vagas-totais">5</b></small>
-                        <button onclick="melhorarTaverna()" class="btn btn-outline-warning btn-sm w-100 mt-2"
-                            id="btn-upgrade">
-                            Melhorar Taverna (50 Ouro)
-                        </button>
-                    </div>
+    <main id="game-container" class="container py-4">
+        <section id="tela-guilda" class="tela-conteudo">
+            <div class="card bg-dark text-white border-secondary shadow mb-4">
+                <div class="card-header bg-dark border-warning text-warning h6">Taverna</div>
+                <div class="card-body bg-dark">
+                    <small class="text-warning">Nível da Taverna: <b id="lvl-taverna">1</b></small><br>
+                    <small>Vagas: <b id="vagas-ocupadas">0</b> / <b id="vagas-totais">5</b></small>
+                    <button onclick="melhorarTaverna()" class="btn btn-outline-warning btn-sm w-100 mt-2"
+                        id="btn-upgrade">
+                        Melhorar Taverna (50 Ouro)
+                    </button>
                 </div>
-                <div class="card bg-dark text-white border-secondary shadow mb-4">
-                    <div class="card-header bg-dark border-warning text-warning h6">Mercenários contratados</div>
-                    <div class="card-body">
-                        <div id="lista-mercenarios" class="overflow-auto" style="max-height: 60vh;">
-                        </div>
-                    </div>
-                </div>
-                <div class="card bg-dark text-white border-secondary shadow mb-4">
-                    <div class="card-header bg-dark border-warning text-warning h6">Mercenários do dia</div>
-                    <div class="card-body">
-                        <div id="taverna-candidatos">
-                        </div>
-                    </div>
-                    <div class="card-body pt-0">
-                        <button class="btn btn-outline-warning btn-sm w-100" onclick="renovarCandidatos()">
-                            Atualizar Mercenários (10 Ouro)
-                        </button>
+            </div>
+            <div class="card bg-dark text-white border-secondary shadow mb-4">
+                <div class="card-header bg-dark border-warning text-warning h6">Mercenários contratados</div>
+                <div class="card-body">
+                    <div id="lista-mercenarios" class="overflow-auto" style="max-height: 60vh;">
                     </div>
                 </div>
             </div>
-
-            <div class="col-md-6">
-                <div class="card bg-dark border-secondary shadow mb-4">
-                    <div class="card-header bg-dark border-warning text-warning h6">Missões</div>
-                    <div class="card-body bg-dark">
-                        <div>
-                            <ul class="nav nav-tabs card-header-tabs" id="tabRanks" role="tablist">
-                                <li class="nav-item"><button class="nav-link active text-warning" data-bs-toggle="tab"
-                                        data-bs-target="#rank-bronze">Bronze</button></li>
-                                <li class="nav-item"><button class="nav-link text-light" data-bs-toggle="tab"
-                                        data-bs-target="#rank-prata">Prata</button></li>
-                                <li class="nav-item"><button class="nav-link text-warning-emphasis" data-bs-toggle="tab"
-                                        data-bs-target="#rank-ouro">Ouro</button></li>
-                            </ul>
-                        </div>
-                        <div class="tab-pane fade show active p-3" id="rank-bronze"></div>
-                        <div class="tab-pane fade p-3" id="rank-prata"></div>
-                        <div class="tab-pane fade p-3" id="rank-ouro"></div>
+            <div class="card bg-dark text-white border-secondary shadow mb-4">
+                <div class="card-header bg-dark border-warning text-warning h6">Mercenários do dia</div>
+                <div class="card-body">
+                    <div id="taverna-candidatos">
                     </div>
                 </div>
+                <div class="card-body pt-0">
+                    <button class="btn btn-outline-warning btn-sm w-100" onclick="renovarCandidatos()">
+                        Atualizar Mercenários (10 Ouro)
+                    </button>
+                </div>
+            </div>
+        </section>
 
-                <div class="card bg-dark border-secondary shadow">
-                    <div class="card-header bg-dark border-warning text-warning h6">Missões em Andamento</div>
-                    <div class="card-body" id="missoes-ativas">
+        <section id="tela-missoes" class="tela-conteudo" style="display: none;">
+            <div class="card bg-dark border-secondary shadow mb-4">
+                <div
+                    class="card-header bg-dark border-warning text-warning h6 d-flex justify-content-between align-items-center">
+                    Quadro de Missões
+                    <small class="text-muted" style="font-size: 0.7rem;">Ordenado por Dificuldade</small>
+                </div>
+                <div class="card-body bg-dark">
+                    <div id="container-lista-missoes" class="row g-3">
                     </div>
                 </div>
             </div>
+            <div class="card bg-dark border-secondary shadow">
+                <div class="card-header bg-dark border-warning text-warning h6">Missões em Andamento</div>
+                <div class="card-body" id="missoes-ativas"></div>
+            </div>
+        </section>
 
-            <div class="col-md-3">
-                <div class="card bg-dark text-white border-secondary shadow">
-                    <div class="card-header bg-dark border-warning text-warning h6">Registros da Guilda</div>
-                    <div class="card-body">
-                        <div id="log" class="overflow-auto"
-                            style="height: 70vh; font-family: monospace; font-size: 0.85rem;">
-                        </div>
-                    </div>
-                </div>
-                <div class="card bg-dark border-secondary shadow mt-4">
-                    <div class="card-header bg-dark border-warning text-warning h6">Histórico de Expedições <small
-                            id="total-missoes" class="text-muted"></small></div>
-                    <div class="card-body overflow-auto" id="lista-historico" style="max-height: 300px;">
+        <section id="tela-escritorio" class="tela-conteudo" style="display: none;">
+            <div class="card bg-dark text-white border-secondary shadow">
+                <div class="card-header bg-dark border-warning text-warning h6">Registros da Guilda</div>
+                <div class="card-body">
+                    <div id="log" class="overflow-auto"
+                        style="height: 70vh; font-family: monospace; font-size: 0.85rem;">
                     </div>
                 </div>
             </div>
-        </div>
+            <div class="card bg-dark border-secondary shadow mt-4">
+                <div class="card-header bg-dark border-warning text-warning h6">Histórico de Expedições <small
+                        id="total-missoes" class="text-muted"></small></div>
+                <div class="card-body overflow-auto" id="lista-historico" style="max-height: 300px;">
+                </div>
+            </div>
+        </section>
     </main>
 
     <template id="tpl-mercenario">
-        <div class="card bg-dark mb-2 border-secondary text-white shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <strong class="m-nome text-warning"></strong>
-                    <small class="text-secondary m-classe" style="font-size: 0.7rem;"></small>
-                    <span class="badge bg-secondary m-rank" style="font-size: 0.6rem;"></span>
-                    <button class="btn btn-outline-danger btn-sm py-0 px-2 btn-dispensar">&times;</button>
-                </div>
-                <div class="d-flex text-center mb-2 bg-black border-secondary py-1" style="font-size: 0.7rem;">
-                    <div class="col-3 text-danger" title="Força">For: <b class="m-str"></b></div>
-                    <div class="col-3 text-info" title="Agilidade">Agi: <b class="m-agi"></b></div>
-                    <div class="col-3 text-success" title="Resistência">Res: <b class="m-end"></b></div>
-                    <div class="col-3 text-primary" title="Inteligência">Int: <b class="m-int"></b></div>
-                </div>
-                <div class="d-flex align-items-center justify-content-between my-1" style="font-size: 0.65rem;">
-                    <span class="text-secondary m-status"></span>
-                    <span class="text-warning">XP: <span class="m-xp-texto"></span></span>
-                </div>
-                <div class="progress" style="height: 4px; background-color: #1a1a1a;">
-                    <div class="progress-bar bg-warning m-xp-barra" style="width: 0%"></div>
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card bg-dark mb-2 border-secondary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <strong class="m-nome text-warning"></strong>
+                        <small class="text-secondary m-classe" style="font-size: 0.7rem;"></small>
+                        <span class="badge bg-secondary m-rank" style="font-size: 0.6rem;"></span>
+                        <button class="btn btn-outline-danger btn-sm py-0 px-2 btn-dispensar">&times;</button>
+                    </div>
+                    <div class="d-flex text-center mb-2 bg-black border-secondary py-1" style="font-size: 0.7rem;">
+                        <div class="col-3 text-danger" title="Força">For: <b class="m-str"></b></div>
+                        <div class="col-3 text-info" title="Agilidade">Agi: <b class="m-agi"></b></div>
+                        <div class="col-3 text-success" title="Resistência">Res: <b class="m-end"></b></div>
+                        <div class="col-3 text-primary" title="Inteligência">Int: <b class="m-int"></b></div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between my-1" style="font-size: 0.65rem;">
+                        <span class="text-secondary m-status"></span>
+                        <span class="text-warning">XP: <span class="m-xp-texto"></span></span>
+                    </div>
+                    <div class="progress" style="height: 4px; background-color: #1a1a1a;">
+                        <div class="progress-bar bg-warning m-xp-barra" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </template>
 
     <template id="tpl-candidato">
-        <div class="card bg-dark mb-2 border-secondary text-white shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <strong class="c-nome text-warning"></strong>
-                    <small class="text-secondary c-classe" style="font-size: 0.7rem;"></small>
-                    <span class="badge bg-primary c-poder" title="Poder Total"></span>
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card bg-dark mb-2 border-secondary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <strong class="c-nome text-warning"></strong>
+                        <small class="text-secondary c-classe" style="font-size: 0.7rem;"></small>
+                        <span class="badge bg-primary c-poder" title="Poder Total"></span>
+                    </div>
+                    <div class="d-flex text-center mb-2 bg-black border-secondary py-1" style="font-size: 0.7rem;">
+                        <div class="col text-danger">For: <span class="c-str"></span></div>
+                        <div class="col text-info">Agi: <span class="c-agi"></span></div>
+                        <div class="col text-success">Res: <span class="c-end"></span></div>
+                        <div class="col text-primary">Int: <span class="c-int"></span></div>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100 py-0 mt-1 c-btn-contratar"
+                        style="font-size: 0.8rem;"></button>
                 </div>
-                <div class="d-flex text-center mb-2 bg-black border-secondary py-1" style="font-size: 0.7rem;">
-                    <div class="col text-danger">For: <span class="c-str"></span></div>
-                    <div class="col text-info">Agi: <span class="c-agi"></span></div>
-                    <div class="col text-success">Res: <span class="c-end"></span></div>
-                    <div class="col text-primary">Int: <span class="c-int"></span></div>
-                </div>
-                <button class="btn btn-outline-primary btn-sm w-100 py-0 mt-1 c-btn-contratar"
-                    style="font-size: 0.8rem;"></button>
             </div>
         </div>
     </template>
 
     <template id="tpl-missao">
-        <div class="card bg-dark text-white border-secondary mb-3 shadow-sm">
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between">
-                    <h6 class="text-warning missao-nome"></h6>
-                    <span class="badge bg-outline-light border missao-dif"></span>
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card bg-dark text-white border-secondary mb-3 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="text-warning missao-nome"></h6>
+                        <span class="badge bg-outline-light border missao-dif"></span>
+                    </div>
+                    <p class="small mb-2 text-secondary">Recompensa: <b class="missao-rec"></b> | Tempo: <span
+                            class="missao-tempo"></span> dias</p>
+                    <div class="form-group mb-3">
+                        <label class="small text-info fw-bold">Designar Equipe:</label>
+                        <div class="missao-grupo-selecao d-flex flex-wrap gap-1 mb-2" id="grupo-{{id}}"></div>
+                    </div>
+                    <div class="alert alert-dark mb-2 missao-previa" style="font-size: 0.75rem;"></div>
+                    <button class="btn btn-warning btn-sm w-100 fw-bold btn-enviar">Lançar Expedição</button>
                 </div>
-                <p class="small mb-2 text-secondary">Recompensa: <b class="missao-rec"></b> | Tempo: <span
-                        class="missao-tempo"></span> dias</p>
-                <div class="form-group mb-3">
-                    <label class="small text-info fw-bold">Designar Equipe:</label>
-                    <select multiple
-                        class="form-select form-select-sm bg-secondary text-white border-0 missao-select"></select>
-                </div>
-                <div class="alert alert-dark mb-2 missao-previa" style="font-size: 0.75rem;"></div>
-                <button class="btn btn-warning btn-sm w-100 fw-bold btn-enviar">Lançar Expedição</button>
             </div>
         </div>
     </template>

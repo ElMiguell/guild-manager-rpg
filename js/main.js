@@ -14,17 +14,44 @@ let estado = {
 
 function atualizarUI() {
   // 1. Recursos Básicos (Direto ao ponto)
-  document.getElementById("ouro").innerText = estado.ouro;
+  const ouroEl = document.getElementById("ouro");
+  ouroEl.innerText = estado.ouro;
+
+  // Fica vermelho se estiver com pouco dinheiro (ex: menos de 20 G)
+  if (estado.ouro < 20) {
+    ouroEl.style.color = "#ff4d4d"; // Vermelho alerta
+  } else {
+    ouroEl.style.color = "#ffd700"; // Dourado padrão
+  }
   document.getElementById("dia").innerText = estado.dia;
   document.getElementById("lvl-taverna").innerText = estado.nivelTaverna;
   document.getElementById("vagas-ocupadas").innerText =
     estado.mercenarios.length;
   document.getElementById("vagas-totais").innerText = estado.limiteMercenários;
-  document.getElementById("btn-upgrade").innerText =
-    `Melhorar Taverna (${estado.nivelTaverna * 50} Ouro)`;
+
+  // Localiza o botão e calcula o custo
+  const btnUpgrade = document.getElementById("btn-upgrade");
+  const custoUpgrade = obterCustoUpgradeTaverna(estado.nivelTaverna);
+
+  // Atualiza o texto do botão
+  btnUpgrade.innerText = `Melhorar Taverna (${custoUpgrade} G)`;
+
+  // Lógica de desativar o botão se não houver ouro suficiente
+  if (estado.ouro < custoUpgrade) {
+    btnUpgrade.disabled = true;
+    btnUpgrade.classList.replace("btn-primary", "btn-secondary"); // Troca azul por cinza (se usar Bootstrap)
+    btnUpgrade.style.opacity = "0.6"; // Garante o efeito visual mesmo sem Bootstrap
+    btnUpgrade.style.cursor = "not-allowed";
+  } else {
+    btnUpgrade.disabled = false;
+    btnUpgrade.classList.replace("btn-secondary", "btn-primary");
+    btnUpgrade.style.opacity = "1";
+    btnUpgrade.style.cursor = "pointer";
+  }
 
   // 2. Renderizar Mercenários usando TEMPLATE
   const listaM = document.getElementById("lista-mercenarios");
+  listaM.className = "row g-3";
   const tplM = document.getElementById("tpl-mercenario");
   listaM.innerHTML = ""; // Limpa a lista
 
@@ -97,57 +124,73 @@ function atualizarUI() {
     listaM.appendChild(clone);
   });
 
-  // 3. Renderizar Missões usando TEMPLATE
+  // 3. Renderizar Missões (Quadro Único Ordenado)
+  const containerGeral = document.getElementById("container-lista-missoes");
   const tplMissao = document.getElementById("tpl-missao");
-  ["Bronze", "Prata", "Ouro"].forEach((rank) => {
-    const container = document.getElementById(`rank-${rank.toLowerCase()}`);
-    if (!container) return;
-    container.innerHTML = "";
 
-    DADOS_JOGO.contratos
-      .filter((c) => c.rank === rank)
-      .forEach((c) => {
-        const clone = tplMissao.content.cloneNode(true);
+  if (containerGeral) {
+    containerGeral.innerHTML = ""; // Limpa o quadro único
 
-        clone.querySelector(".missao-nome").innerText = c.nome;
-        clone.querySelector(".missao-dif").innerText = `Dif: ${c.dificuldade}`;
-        clone.querySelector(".missao-rec").innerText = `${c.recompensa} Ouro`;
-        clone.querySelector(".missao-tempo").innerText = c.tempo;
+    // Criamos uma cópia de todos os contratos para não alterar os dados originais
+    const todasMissoes = [...DADOS_JOGO.contratos];
 
-        const select = clone.querySelector(".missao-select");
-        select.id = `sel-${c.id}`;
-        select.onchange = () => mostrarPreviaMissao(c.id, c.dificuldade);
+    // Ordena por dificuldade (Menor para Maior)
+    todasMissoes.sort((a, b) => a.dificuldade - b.dificuldade);
 
-        const ordemRanks = ["Bronze", "Ferro", "Prata", "Ouro", "Platina"];
-        const nivelMissao = ordemRanks.indexOf(c.rank);
+    todasMissoes.forEach((c) => {
+      const clone = tplMissao.content.cloneNode(true);
 
-        estado.mercenarios.forEach((m, idx) => {
-          // Só aparecem se estiverem disponíveis (feridos e em missão ficam de fora)
-          if (m.status === "disponivel") {
-            const opt = document.createElement("option");
-            opt.value = idx;
+      // Preenchimento dos dados do card
+      clone.querySelector(".missao-nome").innerText = c.nome;
+      clone.querySelector(".missao-rec").innerText = `${c.recompensa} Ouro`;
+      clone.querySelector(".missao-tempo").innerText = c.tempo;
 
-            const nivelMercenario = ordemRanks.indexOf(m.rank);
+      // Estilização visual da Dificuldade baseada no Rank original
+      const difEl = clone.querySelector(".missao-dif");
+      difEl.innerText = `Dif: ${c.dificuldade}`;
 
-            if (nivelMercenario < nivelMissao) {
-              opt.text = `[BLOQUEADO] ${m.nome} (Rank ${m.rank})`;
-              opt.disabled = true; // Impede a seleção
-            } else {
-              opt.text = `${m.nome} (Poder: ${m.poder})`;
-            }
-            select.appendChild(opt);
-          }
-        });
+      // Cores baseadas no Rank para manter a identidade visual
+      const cores = {
+        Bronze: "#cd7f32",
+        Ferro: "#a5a5a5",
+        Prata: "#c0c0c0",
+        Ouro: "#ffd700",
+      };
+      difEl.style.color = cores[c.rank] || "#fff";
+      difEl.style.borderColor = cores[c.rank] || "#fff";
 
-        clone.querySelector(".missao-previa").id = `previa-${c.id}`;
-        clone.querySelector(".missao-previa").innerHTML =
-          "Sucesso: 0% | Custo: 0 G";
-        clone.querySelector(".btn-enviar").onclick = () =>
-          enviarMissaoDireta(c.id);
+      // Lógica de designação de equipe (Mantida do seu original)
+      const ordemRanks = ["Bronze", "Ferro", "Prata", "Ouro", "Platina"];
+      const nivelMissao = ordemRanks.indexOf(c.rank);
+      const containerGrupo = clone.querySelector(".missao-grupo-selecao");
 
-        container.appendChild(clone);
+      estado.mercenarios.forEach((m, idx) => {
+        if (m.status === "disponivel") {
+          const label = document.createElement("label");
+          label.className = "btn btn-sm btn-outline-secondary m-1";
+          const isBloqueado = ordemRanks.indexOf(m.rank) < nivelMissao;
+
+          label.innerHTML = `
+                    <input type="checkbox" class="me-1 m-check" 
+                           value="${idx}" 
+                           data-contrato="${c.id}" 
+                           ${isBloqueado ? "disabled" : ""}>
+                    ${m.nome}
+                `;
+
+          label.querySelector("input").onchange = () =>
+            mostrarPreviaMissao(c.id);
+          containerGrupo.appendChild(label);
+        }
       });
-  });
+
+      clone.querySelector(".missao-previa").id = `previa-${c.id}`;
+      clone.querySelector(".btn-enviar").onclick = () =>
+        enviarMissaoDireta(c.id);
+
+      containerGeral.appendChild(clone);
+    });
+  }
 
   // 4. Missões Ativas
   const listaAtivas = document.getElementById("missoes-ativas");
@@ -169,6 +212,7 @@ function atualizarUI() {
 
   // 5. Candidatos na Taverna
   const divTaverna = document.getElementById("taverna-candidatos");
+  divTaverna.className = "row g-3";
   const tplCandidato = document.getElementById("tpl-candidato");
   divTaverna.innerHTML = "";
 
@@ -232,23 +276,23 @@ function atualizarUI() {
   }
 }
 
-function mostrarPreviaMissao(idContrato, dificuldade) {
-  const select = document.getElementById(`sel-${idContrato}`);
+function mostrarPreviaMissao(idContrato) {
   const previa = document.getElementById(`previa-${idContrato}`);
   const contrato = DADOS_JOGO.contratos.find((c) => c.id === idContrato);
 
-  const selecionados = Array.from(select.selectedOptions).map(
-    (opt) => estado.mercenarios[opt.value],
+  // PEGA OS CHECKBOXES MARCADOS PARA ESTA MISSÃO
+  const selecionadosIndices = Array.from(
+    document.querySelectorAll(
+      `.m-check[data-contrato="${idContrato}"]:checked`,
+    ),
+  ).map((cb) => parseInt(cb.value));
+
+  const selecionados = selecionadosIndices.map(
+    (idx) => estado.mercenarios[idx],
   );
 
-  const ordemRanks = ["Bronze", "Ferro", "Prata", "Ouro", "Platina"];
-  const nivelExigido = ordemRanks.indexOf(contrato.rank);
-  const grupoInvalido = selecionados.some(
-    (m) => ordemRanks.indexOf(m.rank) < nivelExigido,
-  );
-
-  if (grupoInvalido) {
-    previa.innerHTML = `<span class="text-danger fw-bold">Rank Insuficiente!</span>`;
+  if (selecionados.length === 0) {
+    previa.innerHTML = "Sucesso: 0% | Custo: 0 G";
     return;
   }
 
@@ -258,36 +302,39 @@ function mostrarPreviaMissao(idContrato, dificuldade) {
     0,
   );
 
-  const cor =
-    calculo.chance > 75
-      ? "text-success"
-      : calculo.chance > 45
-        ? "text-warning"
-        : "text-danger";
-
-  // Tradução simples para o display
-  const nomesAtributos = {
-    forca: "STR",
-    agilidade: "AGI",
-    resistencia: "END",
-    inteligencia: "INT",
-  };
-  const labelAtributo = nomesAtributos[contrato.atributoChave];
+  const corBarra =
+    calculo.chance > 70
+      ? "bg-success"
+      : calculo.chance > 40
+        ? "bg-warning"
+        : "bg-danger";
 
   previa.innerHTML = `
-        <span class="${cor} fw-bold">Sucesso: ${calculo.chance}%</span> | 
-        <b>Custo: ${custoTotal} G</b><br>
-        <small class="text-info">Foco em ${labelAtributo} detectado!</small>
-    `;
+    <div class="mt-2">
+        <small class="d-flex justify-content-between">
+            <span>Chance de Sucesso:</span>
+            <b>${calculo.chance}%</b>
+        </small>
+        <div class="progress" style="height: 10px;">
+            <div class="progress-bar ${corBarra}" style="width: ${calculo.chance}%"></div>
+        </div>
+        <div class="text-muted mt-1 small">
+            Suprimentos: <span class="text-warning">${Math.floor(contrato.recompensa * 0.15)} G</span> | 
+            Salários: <span class="text-warning">${custoTotal} G</span>
+        </div>
+    </div>
+  `;
 }
 
 function enviarMissaoDireta(idContrato) {
   const contrato = DADOS_JOGO.contratos.find((c) => c.id === idContrato);
-  const select = document.getElementById(`sel-${idContrato}`);
 
-  const selecionadosIndices = Array.from(select.selectedOptions).map((opt) =>
-    parseInt(opt.value),
-  );
+  // NOVA FORMA DE PEGAR OS SELECIONADOS
+  const selecionadosIndices = Array.from(
+    document.querySelectorAll(
+      `.m-check[data-contrato="${idContrato}"]:checked`,
+    ),
+  ).map((cb) => parseInt(cb.value));
 
   if (selecionadosIndices.length === 0) {
     return log("Selecione ao menos um mercenário!");
@@ -295,40 +342,28 @@ function enviarMissaoDireta(idContrato) {
 
   const grupo = selecionadosIndices.map((idx) => estado.mercenarios[idx]);
 
-  // --- NOVA VERIFICAÇÃO DE RANK ---
-  const ordemRanks = ["Bronze", "Ferro", "Prata", "Ouro", "Platina"];
-  const nivelExigido = ordemRanks.indexOf(contrato.rank);
-
-  const grupoInadequado = grupo.some(
-    (m) => ordemRanks.indexOf(m.rank) < nivelExigido,
-  );
-
-  if (grupoInadequado) {
-    return log(
-      `Missão negada: Este contrato de rank ${contrato.rank} exige veteranos experientes!`,
-      "alerta",
-    );
-  }
-  const custoDoGrupo = grupo.reduce(
+  // Cálculo de custos
+  const salariosGrupo = grupo.reduce(
     (sum, m) => sum + calcularCustoContratacao(m),
     0,
   );
-  if (estado.ouro < custoDoGrupo) {
-    return log(
-      `Ouro insuficiente! Você precisa de ${custoDoGrupo} G para suprimentos.`,
-    );
+  const custoSuprimentos = Math.floor(contrato.recompensa * 0.15);
+  const custoTotal = salariosGrupo + custoSuprimentos;
+
+  if (estado.ouro < custoTotal) {
+    return log(`Ouro insuficiente! Você precisa de ${custoTotal} G.`, "alerta");
   }
-  estado.ouro -= custoDoGrupo;
+
+  estado.ouro -= custoTotal;
   grupo.forEach((m) => (m.status = "em missão"));
+
   estado.missoesAtivas.push({
     ...contrato,
     grupo: grupo,
-    poderTotal: grupo.reduce((sum, m) => sum + m.poder, 0),
     tempoRestante: contrato.tempo,
   });
-  log(
-    `Expedição lançada: ${contrato.nome}. Boa sorte aos ${grupo.length} mercenários!`,
-  );
+
+  log(`Expedição lançada: ${contrato.nome}.`, "info");
   salvarJogo();
   atualizarUI();
 }
@@ -461,9 +496,9 @@ function passarTempo(dias) {
 
       if (sucesso) {
         // --- SUCESSO ---
-        lucroFinal = Math.floor(missao.recompensa * 0.2);
+        lucroFinal = missao.recompensa;
         estado.ouro += lucroFinal;
-        log(`SUCESSO: ${missao.nome}! Lucro: ${lucroFinal}`, "sucesso");
+        log(`SUCESSO: ${missao.nome}! Recebemos ${lucroFinal} G.`, "sucesso");
 
         missao.grupo.forEach((m) => {
           const xpGanha = Math.floor(missao.dificuldade * 0.5);
@@ -541,15 +576,14 @@ function renovarCandidatos() {
 }
 
 function melhorarTaverna() {
-  const custo = estado.nivelTaverna * 50;
+  const custo = obterCustoUpgradeTaverna(estado.nivelTaverna);
   if (estado.ouro >= custo) {
     estado.ouro -= custo;
     estado.nivelTaverna++;
-    log(`Taverna Nível ${estado.nivelTaverna}!`);
-    salvarJogo();
+    log(`Taverna expandida para o Nível ${estado.nivelTaverna}!`, "sucesso");
     atualizarUI();
   } else {
-    log("Ouro insuficiente.");
+    log("Ouro insuficiente para a reforma.", "alerta");
   }
 }
 
@@ -681,6 +715,35 @@ function resetarJogo() {
     localStorage.removeItem("guild_manager_save");
     location.reload();
   }
+}
+
+function navegar(idTela) {
+  // 1. Esconder todas as telas
+  const telas = document.querySelectorAll(".tela-conteudo");
+  telas.forEach((tela) => {
+    tela.style.display = "none";
+    // Removemos a animação para poder reiniciá-la
+    tela.style.animation = "none";
+  });
+
+  // 2. Mostrar a tela desejada
+  const telaAlvo = document.getElementById(`tela-${idTela}`);
+  if (telaAlvo) {
+    telaAlvo.style.display = "block";
+    // Forçamos o navegador a reconhecer a nova animação (truque de reflow)
+    void telaAlvo.offsetWidth;
+    telaAlvo.style.animation = "fadeIn 0.4s ease-in-out";
+  }
+
+  // 3. Atualizar a aparência dos botões (feedback visual)
+  document
+    .querySelectorAll(".btn-nav")
+    .forEach((btn) => btn.classList.remove("ativo"));
+  document.getElementById(`btn-${idTela}`).classList.add("ativo");
+
+  // 4. Salvar qual era a última tela aberta (Opcional)
+  estado.ultimaTela = idTela;
+  salvarJogo();
 }
 
 carregarJogo(); // Tenta carregar antes de gerar novos candidatos
